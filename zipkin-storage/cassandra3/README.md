@@ -1,6 +1,6 @@
 # storage-cassandra3
 
-This CQL-based Cassandra 3.9+ storage component includes a `GuavaSpanStore` and `GuavaSpanConsumer`.
+This CQL-based Cassandra 3.0.8/3.8+ storage component includes a `GuavaSpanStore` and `GuavaSpanConsumer`.
 `GuavaSpanStore.getDependencies()` returns pre-aggregated dependency links (ex via [zipkin-dependencies](https://github.com/openzipkin/zipkin-dependencies)).
 
 The implementation uses the [Datastax Java Driver 3.x](https://github.com/datastax/java-driver).
@@ -38,12 +38,12 @@ See [Cassandra3Storage](src/main/java/zipkin/storage/cassandra3/Cassandra3Storag
 
 ### Trace indexing
 
-Indexing in CQL is simplified by using both MATERIALIZED VIEWs and SASI.
+Indexing in CQL is simplified by using both MATERIALIZED VIEWs and indexes.
 This has reduced the number of tables from 7 down to 2. This also reduces the write-amplification in CassandraSpanConsumer.
 This write amplification now happens internally to C*, and is visible in the increase write latency (although write latency
 remains performant at single digit milliseconds).
-A SASI index on its 'all_annotations' column permits full-text searches against annotations.
-A SASI index on the 'duration' column.
+A index on its 'annotation_keys' column support the annotationQuery parameter in the zipkin api
+A index on the 'duration' column.
 A materialized view of the 'trace_by_service_span' table exists as 'trace_by_service'.
 
 [Core annotations](../zipkin/src/main/java/zipkin/Constants.java#L184),

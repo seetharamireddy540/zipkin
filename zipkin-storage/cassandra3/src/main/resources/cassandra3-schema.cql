@@ -20,6 +20,7 @@ CREATE TYPE IF NOT EXISTS zipkin3.binary_annotation (
     ep frozen<endpoint>
 );
 
+// TimeWindowCompactionStrategy requires cassandra 3.0.8/3.8+
 CREATE TABLE IF NOT EXISTS zipkin3.traces (
     trace_id            varint,
     ts_uuid             timeuuid,
@@ -30,7 +31,7 @@ CREATE TABLE IF NOT EXISTS zipkin3.traces (
     duration            bigint,
     annotations         list<frozen<annotation>>,
     binary_annotations  list<frozen<binary_annotation>>,
-    all_annotations     text,
+    annotation_keys     set<text>,
     PRIMARY KEY (trace_id, ts_uuid, id)
 )
     WITH CLUSTERING ORDER BY (ts_uuid DESC)
@@ -60,16 +61,9 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS zipkin3.trace_by_service
     AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'unchecked_tombstone_compaction': 'true', 'tombstone_threshold': '0.2'}
         AND default_time_to_live =  259200;
 
-CREATE CUSTOM INDEX ON zipkin3.traces (all_annotations) USING 'org.apache.cassandra.index.sasi.SASIIndex'
-   WITH OPTIONS = {
-    'mode': 'CONTAINS',
-    'analyzed': 'true',
-    'analyzer_class':'org.apache.cassandra.index.sasi.analyzer.NonTokenizingAnalyzer',
-    'case_sensitive': 'false'
-   };
+CREATE INDEX ON zipkin3.traces (annotation_keys);
 
-CREATE CUSTOM INDEX ON zipkin3.trace_by_service_span (duration) USING 'org.apache.cassandra.index.sasi.SASIIndex'
-   WITH OPTIONS = {'mode': 'PREFIX'};
+CREATE INDEX ON zipkin3.trace_by_service_span (duration);
 
 
 CREATE TABLE IF NOT EXISTS zipkin3.dependencies (

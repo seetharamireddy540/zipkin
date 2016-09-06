@@ -27,12 +27,10 @@ services:
   - mysql
 
 before_install:
-  # Manually install very recent version of cassandra; unless we create a user we have to run it as root
-  # uncomment below when datastax has version 3.9 available. at time of commit, latest was 3.7
-  #- curl -SL http://www-us.apache.org/dist/cassandra/3.9/apache-cassandra-3.9-bin.tar.gz | tar xz
-  - curl -SL http://cassci.datastax.com/job/trunk/lastSuccessfulBuild/artifact/build/apache-cassandra-3.10-SNAPSHOT-bin.tar.gz | tar xz
-  - sed -i -e 's/INFO/WARN/g' apache-cassandra-*/conf/logback.xml
-  - sudo apache-cassandra-*/bin/cassandra -R
+  # Manually install very recent version of cassandra
+  - curl -SL http://downloads.datastax.com/community/dsc-cassandra-3.0.8-bin.tar.gz | tar xz
+  - sed -i -e 's/INFO/WARN/g' dsc-cassandra-*/conf/logback.xml
+  - sudo dsc-cassandra-*/bin/cassandra
   # install mysql schema
   - mysql -uroot -e 'SET GLOBAL innodb_file_format=Barracuda'
   - mysql -uroot -e 'create database if not exists zipkin'

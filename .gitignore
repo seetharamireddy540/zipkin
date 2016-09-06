@@ -14,7 +14,7 @@ _site/
 *.iml
 *.swp
 # .travis.yml installs things
-apache-cassandra-*
+dsc-cassandra-*
 elasticsearch-2*
 kafka_*
 # temporary directory used by travis/publish.sh for building gh-pages

@@ -36,7 +36,6 @@ import zipkin.storage.QueryRequest;
 
 import static zipkin.internal.Util.UTF_8;
 import static zipkin.internal.Util.checkArgument;
-import static zipkin.internal.Util.sortedList;
 
 final class CassandraUtil {
 
@@ -91,9 +90,9 @@ final class CassandraUtil {
     return annotationKeys;
   }
 
-  static List<String> annotationKeys(QueryRequest request) {
+  static Set<String> annotationKeys(QueryRequest request) {
     if (request.annotations.isEmpty() && request.binaryAnnotations.isEmpty()) {
-      return Collections.emptyList();
+      return Collections.emptySet();
     }
     checkArgument(request.serviceName != null, "serviceName needed with annotation query");
     Set<String> annotationKeys = new LinkedHashSet<>();
@@ -103,11 +102,7 @@ final class CassandraUtil {
     for (Map.Entry<String, String> b : request.binaryAnnotations.entrySet()) {
       annotationKeys.add(request.serviceName + ":" + b.getKey() + ":" + b.getValue());
     }
-    return sortedList(annotationKeys);
-  }
-
-  static Function<Map<BigInteger, Long>, Set<BigInteger>> keyset() {
-    return (Function) KeySet.INSTANCE;
+    return annotationKeys;
   }
 
   static BoundStatement bindWithName(PreparedStatement prepared, String name) {

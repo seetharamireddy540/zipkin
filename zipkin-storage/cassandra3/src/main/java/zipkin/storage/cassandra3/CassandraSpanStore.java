@@ -144,12 +144,12 @@ final class CassandraSpanStore implements GuavaSpanStore {
             .and(QueryBuilder.lte("ts", QueryBuilder.bindMarker("end_ts")))
             .and(QueryBuilder.gte("duration", QueryBuilder.bindMarker("start_duration")))
             .and(QueryBuilder.lte("duration", QueryBuilder.bindMarker("end_duration")))
-            .limit(QueryBuilder.bindMarker("limit_")));
+            .limit(QueryBuilder.bindMarker("limit_")).allowFiltering());
 
     selectTraceIdsByAnnotation = session.prepare(
         QueryBuilder.select("ts", "trace_id")
             .from(TABLE_TRACES)
-            .where(QueryBuilder.like("all_annotations", QueryBuilder.bindMarker("annotation")))
+            .where(QueryBuilder.contains("annotation_keys", QueryBuilder.bindMarker("annotation_key")))
             .and(QueryBuilder.gte("ts_uuid", QueryBuilder.bindMarker("start_ts")))
             .and(QueryBuilder.lte("ts_uuid", QueryBuilder.bindMarker("end_ts")))
             .limit(QueryBuilder.bindMarker("limit_"))
@@ -200,7 +200,7 @@ final class CassandraSpanStore implements GuavaSpanStore {
     // Over fetch on indexes as they don't return distinct (trace id, timestamp) rows.
     final int traceIndexFetchSize = request.limit * indexFetchMultiplier;
     ListenableFuture<Map<BigInteger, Long>> traceIdToTimestamp = getTraceIdsByServiceNames(request);
-    List<String> annotationKeys = CassandraUtil.annotationKeys(request);
+    Set<String> annotationKeys = CassandraUtil.annotationKeys(request);
     ListenableFuture<Collection<BigInteger>> traceIds;
     if (annotationKeys.isEmpty()) {
       // Simplest case is when there is no annotation query. Limit is valid since there's no AND
@@ -476,7 +476,7 @@ final class CassandraSpanStore implements GuavaSpanStore {
     try {
       BoundStatement bound =
           CassandraUtil.bindWithName(selectTraceIdsByAnnotation, "select-trace-ids-by-annotation")
-              .setString("annotation", "%" + annotationKey + "%")
+              .setString("annotation_key", annotationKey)
               .setUUID("start_ts", UUIDs.startOf(startTsMillis))
               .setUUID("end_ts", UUIDs.endOf(endTsMillis))
               .setInt("limit_", limit);

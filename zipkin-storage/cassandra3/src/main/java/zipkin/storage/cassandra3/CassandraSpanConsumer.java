@@ -20,7 +20,6 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -68,7 +67,7 @@ final class CassandraSpanConsumer implements GuavaSpanConsumer {
             .value("duration", QueryBuilder.bindMarker("duration"))
             .value("annotations", QueryBuilder.bindMarker("annotations"))
             .value("binary_annotations", QueryBuilder.bindMarker("binary_annotations"))
-            .value("all_annotations", QueryBuilder.bindMarker("all_annotations")));
+            .value("annotation_keys", QueryBuilder.bindMarker("annotation_keys")));
 
     insertServiceSpanName = session.prepare(
         QueryBuilder
@@ -144,7 +143,7 @@ final class CassandraSpanConsumer implements GuavaSpanConsumer {
           .setString("span_name", span.name)
           .setList("annotations", annotations)
           .setList("binary_annotations", binaryAnnotations)
-          .setString("all_annotations", Joiner.on(',').join(annotationKeys));
+          .setSet("annotation_keys", annotationKeys);
 
       if (null != rawSpan.timestamp) {
         bound = bound.setLong("ts", rawSpan.timestamp);
